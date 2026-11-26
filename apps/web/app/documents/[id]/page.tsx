@@ -150,9 +150,6 @@ function DocTools({ d, setVersion }: { d: DocumentDetail; setVersion: (v: number
           </button>
         ))}
       </div>
-      <a className="btn btn-quiet" href={`/api/documents/${d.id}/versions/${shownNumber}/file`} target="_blank" rel="noreferrer">
-        Open PDF
-      </a>
       <button className="btn btn-primary" onClick={() => setUploadOpen(true)}>
         Upload version {latest + 1}
       </button>
@@ -252,8 +249,18 @@ function SourceSheet({ d, activeId, onSelect }: { d: DocumentDetail; activeId: s
   return (
     <aside className="sheet" aria-label="Document text">
       <div className="sheet-head">
-        <span>Text of version {d.shownVersion.versionNumber}</span>
-        <span>Highlighted passages are the evidence</span>
+        <div>
+          <strong>Text of version {d.shownVersion.versionNumber}</strong>
+          <div className="faint">Highlighted passages are the evidence</div>
+        </div>
+        <a
+          className="btn btn-quiet btn-sm"
+          href={`/api/documents/${d.id}/versions/${d.shownVersion.versionNumber}/file`}
+          target="_blank"
+          rel="noreferrer"
+        >
+          Open PDF
+        </a>
       </div>
       <pre className="sheet-text">
         {pieces.map((p, i) =>

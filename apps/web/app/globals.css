@@ -206,7 +206,9 @@ textarea { resize: vertical; }
 .chip[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: #fff; }
 
 .sheet { position: sticky; top: 16px; background: var(--sheet); border: 1px solid var(--rule); border-radius: var(--r-md); max-height: calc(100vh - 32px); display: flex; flex-direction: column; box-shadow: var(--shadow-panel); }
-.sheet-head { padding: 10px 16px; border-bottom: 1px solid var(--rule); display: flex; justify-content: space-between; gap: 12px; font-size: 13px; color: var(--ink-soft); }
+.sheet-head { padding: 10px 12px 10px 16px; border-bottom: 1px solid var(--rule); display: flex; justify-content: space-between; align-items: center; gap: 12px; font-size: 13px; color: var(--ink-soft); }
+.sheet-head strong { color: var(--ink); font-weight: 600; }
+.btn-sm { padding: 4px 10px; font-size: 13px; border-color: var(--rule-strong); }
 .sheet-text { margin: 0; padding: 16px; overflow: auto; font-family: var(--mono); font-size: 12.5px; line-height: 1.65; white-space: pre-wrap; }
 .sheet-text mark { background: var(--highlighter-soft); border-radius: 2px; cursor: pointer; }
 .sheet-text mark.on { background: var(--highlighter); box-shadow: 0 0 0 2px var(--highlighter); }
