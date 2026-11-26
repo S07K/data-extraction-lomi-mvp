@@ -5,9 +5,10 @@ import { useParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { DocumentDetail, ValueDto } from "@lomi/contracts";
 import { StatusText } from "@/components/Status";
+import { UploadDialog } from "@/components/UploadDialog";
 import { ValueCard } from "@/components/ValueCard";
 import { api, IN_FLIGHT } from "@/lib/api";
-import { fieldLabel, TYPE_LABEL } from "@/lib/format";
+import { fieldLabel, STATUS_TEXT, timeAgo, TYPE_LABEL } from "@/lib/format";
 
 /** Order inside "Needs review": what changed first, then new values, then gaps. */
 function pendingRank(v: ValueDto) {
@@ -30,13 +31,13 @@ export default function DocumentPage() {
     },
   });
 
-  if (doc.isLoading) return <p className="muted">Loading…</p>;
+  if (doc.isLoading) return <div className="content"><p className="muted">Loading…</p></div>;
   if (doc.error || !doc.data) {
     return (
-      <>
+      <div className="content">
         <p className="error-note">{(doc.error as Error | null)?.message ?? "Document not found."}</p>
-        <Link href="/">Back to documents</Link>
-      </>
+        <Link href="/">Back to the overview</Link>
+      </div>
     );
   }
   return <DocumentView d={doc.data} setVersion={setVersion} activeId={activeId} setActiveId={setActiveId} />;
@@ -61,17 +62,21 @@ function DocumentView({
   const readOnly = !shown.reviewable;
 
   return (
-    <>
-      <p className="faint" style={{ margin: "0 0 8px" }}>
-        <Link href="/">Documents</Link> / {TYPE_LABEL[d.type] ?? d.type}
-      </p>
-      <div className="detail-head">
-        <div>
+    <div className="content">
+      <header className="doc-head">
+        <div className="doc-head-main">
           <h1>{d.title}</h1>
-          <Headline d={d} pending={pending.length} changed={changed} carried={carried} />
+          <div className="doc-meta">
+            <span className="type-chip">{TYPE_LABEL[d.type] ?? d.type}</span>
+            <StatusText status={d.status} />
+            <span className="faint">
+              Latest is version {d.currentVersion.versionNumber}, uploaded {timeAgo(d.currentVersion.createdAt)}
+            </span>
+          </div>
         </div>
-        <VersionBar d={d} setVersion={setVersion} />
-      </div>
+        <DocTools d={d} setVersion={setVersion} />
+      </header>
+      <Headline d={d} pending={pending.length} changed={changed} carried={carried} />
 
       <Banners d={d} onShowLatest={() => setVersion(undefined)} />
 
@@ -104,15 +109,15 @@ function DocumentView({
           <SourceSheet d={d} activeId={activeId} onSelect={setActiveId} />
         </div>
       )}
-    </>
+    </div>
   );
 }
 
 function Headline({ d, pending, changed, carried }: { d: DocumentDetail; pending: number; changed: number; carried: number }) {
   const s = d.shownVersion;
   if (s.status !== "extracted") return null;
-  if (!s.reviewable) return <p className="headline muted">Version {s.versionNumber} is read-only history.</p>;
-  if (pending === 0) return <p className="headline muted">Every value in version {s.versionNumber} is reviewed.</p>;
+  if (!s.reviewable) return null;
+  if (pending === 0) return <p className="headline headline-done">Every value in version {s.versionNumber} is reviewed.</p>;
   return (
     <p className="headline">
       <strong>
@@ -124,56 +129,41 @@ function Headline({ d, pending, changed, carried }: { d: DocumentDetail; pending
   );
 }
 
-function VersionBar({ d, setVersion }: { d: DocumentDetail; setVersion: (v: number | undefined) => void }) {
-  const qc = useQueryClient();
-  const fileRef = useRef<HTMLInputElement>(null);
-  const upload = useMutation({
-    mutationFn: (file: File) => {
-      const form = new FormData();
-      form.set("file", file);
-      return api.uploadVersion(d.id, form);
-    },
-    onSuccess: async () => {
-      if (fileRef.current) fileRef.current.value = "";
-      setVersion(undefined);
-      await qc.invalidateQueries({ queryKey: ["document", d.id] });
-    },
-  });
+function DocTools({ d, setVersion }: { d: DocumentDetail; setVersion: (v: number | undefined) => void }) {
+  const [uploadOpen, setUploadOpen] = useState(false);
   const shownNumber = d.shownVersion.versionNumber;
+  const latest = d.currentVersion.versionNumber;
 
   return (
-    <div>
-      <div className="version-bar" role="group" aria-label="Versions">
+    <div className="doc-tools">
+      <div className="version-switch" role="group" aria-label="Version shown">
+        <span className="version-switch-label">Version</span>
         {[...d.versions].reverse().map((v) => (
           <button
             key={v.id}
-            className={`btn ${v.versionNumber === shownNumber ? "" : "btn-quiet"}`}
+            className={`version-pill status-dot-${v.status}`}
             aria-pressed={v.versionNumber === shownNumber}
             onClick={() => setVersion(v.versionNumber === d.reviewableVersionNumber ? undefined : v.versionNumber)}
-            title={v.status}
+            title={`Version ${v.versionNumber}: ${STATUS_TEXT[v.status]}`}
           >
             v{v.versionNumber}
           </button>
         ))}
-        <a className="btn btn-quiet" href={`/api/documents/${d.id}/versions/${shownNumber}/file`} target="_blank" rel="noreferrer">
-          Open PDF
-        </a>
       </div>
-      <div className="version-bar" style={{ marginTop: 8 }}>
-        <input ref={fileRef} type="file" accept="application/pdf" aria-label="New version PDF" />
-        <button
-          className="btn"
-          disabled={upload.isPending}
-          onClick={() => {
-            const f = fileRef.current?.files?.[0];
-            if (f) upload.mutate(f);
-          }}
-        >
-          {upload.isPending ? "Uploading…" : "Upload new version"}
-        </button>
-      </div>
-      {upload.data?.deduplicated && <p className="faint">That file is identical to version {upload.data.versionNumber}; nothing new was created.</p>}
-      {upload.error && <p className="error-note">{(upload.error as Error).message}</p>}
+      <a className="btn btn-quiet" href={`/api/documents/${d.id}/versions/${shownNumber}/file`} target="_blank" rel="noreferrer">
+        Open PDF
+      </a>
+      <button className="btn btn-primary" onClick={() => setUploadOpen(true)}>
+        Upload version {latest + 1}
+      </button>
+      <UploadDialog
+        mode={{ kind: "version", documentId: d.id, title: d.title, nextVersion: latest + 1 }}
+        open={uploadOpen}
+        onClose={() => {
+          setUploadOpen(false);
+          setVersion(undefined);
+        }}
+      />
     </div>
   );
 }

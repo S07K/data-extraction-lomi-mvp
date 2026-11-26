@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import type { ReactNode } from "react";
+import { Sidebar } from "@/components/Sidebar";
 import { Providers } from "./providers";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Extraction review",
+  title: "Review desk",
   description: "Check every extracted value against the passage it came from.",
 };
 
@@ -13,13 +13,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <body>
-        <header className="masthead">
-          <Link href="/" className="wordmark">
-            Extraction review
-          </Link>
-        </header>
         <Providers>
-          <main className="page">{children}</main>
+          <div className="shell">
+            <Sidebar />
+            <main className="main">{children}</main>
+          </div>
         </Providers>
       </body>
     </html>
