@@ -63,7 +63,7 @@ h2 { font-size: 15px; margin: 0; font-weight: 650; }
   padding: 18px 14px;
 }
 .brand { display: flex; align-items: center; gap: 10px; color: #fff; text-decoration: none; font-weight: 650; font-size: 16px; padding: 4px 8px 14px; letter-spacing: -0.01em; }
-.brand-mark { width: 18px; height: 18px; border-radius: 4px; background: var(--highlighter); box-shadow: inset 0 -6px 0 rgba(0, 0, 0, 0.12); transform: rotate(-6deg); }
+.brand-mark { width: 18px; height: 18px; border-radius: 4px; background: var(--highlighter); transform: rotate(-6deg); }
 .btn.btn-upload { width: 100%; background: var(--highlighter); border-color: var(--highlighter); color: var(--side); font-weight: 650; margin-bottom: 8px; padding: 8px 12px; }
 .btn.btn-upload:hover { background: #ffd92e; border-color: #ffd92e; }
 .nav-item { display: block; padding: 7px 10px; border-radius: var(--r-sm); text-decoration: none; color: var(--side-text); font-weight: 550; }
