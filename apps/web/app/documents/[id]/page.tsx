@@ -89,9 +89,9 @@ function DocumentView({
         <DocTools d={d} setVersion={setVersion} />
       </header>
       <Headline d={d} pending={pending.length} changed={changed} carried={carried} />
+      <Banners d={d} onShowLatest={() => setVersion(undefined)} />
       </div>
 
-      <Banners d={d} onShowLatest={() => setVersion(undefined)} />
 
       {shown.status === "extracted" && (
         <div className="workspace">

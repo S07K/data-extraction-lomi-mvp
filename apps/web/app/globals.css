@@ -145,8 +145,10 @@ textarea { resize: vertical; }
 
 /* ---------- document header ---------- */
 .doc-sticky { position: sticky; top: 0; z-index: 5; background: var(--paper); margin: -28px -32px 0; padding: 20px 32px 0; }
-.doc-sticky .headline { margin-bottom: 0; }
-.doc-sticky::after { content: ""; display: block; height: 16px; background: linear-gradient(var(--paper), rgba(244, 246, 249, 0)); margin: 0 -32px -16px; position: relative; pointer-events: none; }
+.doc-sticky .headline, .doc-sticky .banner { margin-bottom: 0; }
+.doc-sticky .headline + .banner, .doc-sticky .banner + .banner { margin-top: 10px; }
+/* The fade reserves its own space, so at rest it never covers the content below. */
+.doc-sticky::after { content: ""; display: block; height: 16px; background: linear-gradient(var(--paper), rgba(244, 246, 249, 0)); margin: 0 -32px; pointer-events: none; }
 .doc-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; flex-wrap: wrap; padding-bottom: 14px; border-bottom: 1px solid var(--rule); margin-bottom: 14px; }
 .doc-head-main { min-width: 0; }
 .doc-meta { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 6px; }
@@ -208,7 +210,6 @@ textarea { resize: vertical; }
 .chip { border: 1px solid var(--rule-strong); border-radius: 999px; padding: 2px 10px; font-size: 13px; background: var(--sheet); cursor: pointer; }
 .chip[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: #fff; }
 
-.workspace { margin-top: 16px; }
 .sheet { position: sticky; top: calc(var(--doc-head-h, 0px) + 16px); background: var(--sheet); border: 1px solid var(--rule); border-radius: var(--r-md); max-height: calc(100vh - var(--doc-head-h, 0px) - 32px); display: flex; flex-direction: column; box-shadow: var(--shadow-panel); }
 .sheet-head { padding: 10px 12px 10px 16px; border-bottom: 1px solid var(--rule); display: flex; justify-content: space-between; align-items: center; gap: 12px; font-size: 13px; color: var(--ink-soft); }
 .sheet-head strong { color: var(--ink); font-weight: 600; }
