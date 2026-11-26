@@ -74,7 +74,10 @@ export class ClaudeCodeProvider implements LlmProvider {
     if (result.structured_output === undefined) {
       throw new ExtractionError("Claude Code returned no structured output", "transient");
     }
-    const usedModel = Object.keys(result.modelUsage ?? {})[0] ?? this.model;
+    // modelUsage also lists Claude Code's small internal helper calls (e.g. a Haiku call);
+    // the extraction is the model that produced the most output.
+    const usedModel =
+      Object.entries(result.modelUsage ?? {}).sort(([, a], [, b]) => (b.outputTokens ?? 0) - (a.outputTokens ?? 0))[0]?.[0] ?? this.model;
     return {
       output: result.structured_output,
       raw: result,
