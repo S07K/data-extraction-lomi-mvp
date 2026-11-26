@@ -4,6 +4,7 @@ import {
   claimVersion,
   commitExtraction,
   createDocument,
+  expireOwnStaleLeases,
   failAttempt,
   getDocument,
   reconcile,
@@ -121,6 +122,16 @@ describe("failure is a state", () => {
     const v = await db.documentVersion.findUniqueOrThrow({ where: { id: up.versionId } });
     expect(v.status).toBe("failed");
     expect(v.failureReason).toMatch(/lease expired/);
+  });
+
+  it("a restarted worker expires only its own previous leases, so recovery is immediate", async () => {
+    const mine = await newDoc("a");
+    const theirs = await newDoc("b");
+    await claimVersion(db, mine.versionId, "host-1", "fake");
+    await claimVersion(db, theirs.versionId, "host-12", "fake"); // prefix trap: host-1 vs host-12
+    expect(await expireOwnStaleLeases(db, "host-1")).toBe(1);
+    const r = await reconcile(db);
+    expect(r.requeuedExpired).toEqual([mine.versionId]);
   });
 
   it("transient errors re-queue with backoff; permanent errors fail; manual retry re-queues", async () => {

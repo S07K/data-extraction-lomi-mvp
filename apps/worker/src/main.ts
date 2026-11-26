@@ -1,6 +1,6 @@
 import { hostname } from "node:os";
 import { Worker } from "bullmq";
-import { createDb } from "@lomi/db";
+import { createDb, expireOwnStaleLeases } from "@lomi/db";
 import { createProvider, type LlmProvider } from "@lomi/extraction";
 import { createExtractionQueue, EXTRACTION_QUEUE, redisConnection, type ExtractionJobData } from "@lomi/queue";
 import { log } from "./log.js";
@@ -25,6 +25,8 @@ const worker = new Worker<ExtractionJobData>(
 );
 worker.on("error", (err) => log("bullmq.error", { error: err.message }));
 
+const expired = await expireOwnStaleLeases(db, workerId);
+if (expired) log("leases.recovered", { count: expired, workerId });
 const stopReconciler = startReconciler(db, queue);
 log("worker.started", { workerId, concurrency, provider: providerName });
 

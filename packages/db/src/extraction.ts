@@ -261,6 +261,20 @@ export async function failAttempt(
   });
 }
 
+/**
+ * At worker startup: any lease held under this worker id belongs to a previous
+ * incarnation of this same worker (container restart keeps hostname + pid), so it
+ * is certainly dead. Expire it now so the reconciler recovers it immediately
+ * instead of waiting out the lease TTL. Never touches other workers' leases.
+ */
+export async function expireOwnStaleLeases(db: Db, workerId: string): Promise<number> {
+  const r = await db.documentVersion.updateMany({
+    where: { status: "extracting", leaseOwner: { startsWith: `${workerId}:` } },
+    data: { leaseExpiresAt: new Date(Date.now() - 1) },
+  });
+  return r.count;
+}
+
 export interface ReconcileResult {
   /** Queued versions whose backoff has elapsed — (re)enqueue them; BullMQ dedupes by job id. */
   due: { versionId: string; attempts: number }[];

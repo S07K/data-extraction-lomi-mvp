@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { afterAll, beforeEach, describe, expect, inject, it } from "vitest";
-import { claimVersion, commitExtraction, createDb, saveParsedText, type ValidatedValue } from "@lomi/db";
+import type { ValidatedValue } from "@lomi/core";
+import { claimVersion, commitExtraction, createDb, saveParsedText } from "@lomi/db";
 import { createExtractionQueue, redisConnection } from "@lomi/queue";
 import type { DocumentDetail, UploadResponse } from "@lomi/contracts";
 import { buildApp } from "../src/app.js";
