@@ -1,0 +1,30 @@
+{
+  "name": "@lomi/web",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Review UI (Next.js App Router). Talks to the API through a same-origin /api proxy.",
+  "type": "module",
+  "scripts": {
+    "dev": "next dev --port 3000",
+    "build": "next build",
+    "start": "next start --port 3000",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@lomi/contracts": "workspace:*",
+    "@tanstack/react-query": "5.108.4",
+    "next": "16.4.6",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  },
+  "devDependencies": {
+    "@lomi/config": "workspace:*",
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "eslint": "10.15.0",
+    "globals": "^17.14.0",
+    "typescript": "6.0.3"
+  }
+}

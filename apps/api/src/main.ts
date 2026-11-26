@@ -10,6 +10,8 @@ const port = Number(process.env["PORT"] ?? 4000);
 await app.listen({ host: "0.0.0.0", port });
 
 async function shutdown() {
+  // Bounded: nothing here holds state that matters (Postgres commits are atomic).
+  setTimeout(() => process.exit(0), 5_000).unref();
   await app.close();
   await Promise.allSettled([queue.close(), db.$disconnect()]);
   process.exit(0);
