@@ -56,12 +56,23 @@ export async function tryEnqueueExtraction(
   versionId: string,
   attempts: number,
   delayMs = 0,
+  timeoutMs = 1_500,
 ): Promise<boolean> {
+  let timer: NodeJS.Timeout | undefined;
   try {
-    await enqueueExtraction(queue, versionId, attempts, delayMs);
+    // Bounded: with Redis down, BullMQ would otherwise wait for a reconnect and
+    // stall the HTTP request. The reconciler is the safety net either way.
+    await Promise.race([
+      enqueueExtraction(queue, versionId, attempts, delayMs),
+      new Promise((_, reject) => {
+        timer = setTimeout(() => reject(new Error(`enqueue timed out after ${timeoutMs}ms`)), timeoutMs);
+      }),
+    ]);
     return true;
   } catch (err) {
     console.warn(`[queue] enqueue failed for ${versionId}; reconciler will retry:`, (err as Error).message);
     return false;
+  } finally {
+    clearTimeout(timer);
   }
 }

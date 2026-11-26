@@ -2,7 +2,7 @@
  * Read models for the API. Small-scale implementation: progress is computed from
  * rows on read (fine for a handful of documents; see README for the 10k plan).
  */
-import { computeProgress, effectiveValue, reviewState, type Progress } from "@lomi/core";
+import { computeProgress, effectiveValue, FIELD_SPECS, reviewState, type Progress } from "@lomi/core";
 import type { Db } from "./client.js";
 import { DomainError } from "./errors.js";
 import type { Prisma } from "./generated/prisma/client.js";
@@ -141,7 +141,11 @@ export async function getDocument(db: Db, documentId: string, versionNumber?: nu
       values: { include: valueInclude, orderBy: { createdAt: "asc" } },
     },
   });
-  const values = shown.values.map(toValueView);
+  // Stable, meaningful order: the document type's field order (values from one commit share created_at).
+  const order = new Map(FIELD_SPECS[doc.type].map((f, i) => [f.field, i]));
+  const values = shown.values
+    .map(toValueView)
+    .sort((a, b) => (order.get(a.field) ?? 99) - (order.get(b.field) ?? 99) || a.field.localeCompare(b.field));
 
   return {
     id: doc.id,

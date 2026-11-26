@@ -1,0 +1,35 @@
+{
+  "name": "@lomi/api",
+  "version": "0.0.0",
+  "private": true,
+  "description": "HTTP API (Fastify). Writes Postgres, rings the queue; never calls the LLM.",
+  "type": "module",
+  "main": "./dist/main.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint .",
+    "start": "node dist/main.js",
+    "dev": "node --watch --env-file-if-exists=../../.env dist/main.js",
+    "test:integration": "vitest run"
+  },
+  "dependencies": {
+    "@fastify/cors": "11.4.3",
+    "@fastify/multipart": "10.1.9",
+    "@lomi/contracts": "workspace:*",
+    "@lomi/core": "workspace:*",
+    "@lomi/db": "workspace:*",
+    "@lomi/queue": "workspace:*",
+    "fastify": "5.12.8",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@lomi/config": "workspace:*",
+    "@testcontainers/postgresql": "12.2.2",
+    "@testcontainers/redis": "12.2.2",
+    "@types/node": "^24.0.0",
+    "eslint": "10.15.0",
+    "typescript": "6.0.3",
+    "vitest": "5.1.2"
+  }
+}
