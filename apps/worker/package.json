@@ -1,0 +1,33 @@
+{
+  "name": "@lomi/worker",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Extraction worker: BullMQ consumer + Postgres reconciler.",
+  "type": "module",
+  "main": "./dist/main.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint .",
+    "start": "node dist/main.js",
+    "dev": "node --watch --env-file-if-exists=../../.env dist/main.js",
+    "test:integration": "vitest run"
+  },
+  "dependencies": {
+    "@lomi/core": "workspace:*",
+    "@lomi/db": "workspace:*",
+    "@lomi/extraction": "workspace:*",
+    "@lomi/queue": "workspace:*",
+    "bullmq": "6.7.10"
+  },
+  "devDependencies": {
+    "@lomi/config": "workspace:*",
+    "@testcontainers/postgresql": "12.2.2",
+    "@testcontainers/redis": "12.2.2",
+    "@types/node": "^24.0.0",
+    "eslint": "10.15.0",
+    "ioredis": "6.1.0",
+    "typescript": "6.0.3",
+    "vitest": "5.1.2"
+  }
+}

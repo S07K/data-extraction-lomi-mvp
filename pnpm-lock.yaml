@@ -15,6 +15,49 @@ importers:
         specifier: 6.0.3
         version: 6.0.3
 
+  apps/worker:
+    dependencies:
+      '@lomi/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@lomi/db':
+        specifier: workspace:*
+        version: link:../../packages/db
+      '@lomi/extraction':
+        specifier: workspace:*
+        version: link:../../packages/extraction
+      '@lomi/queue':
+        specifier: workspace:*
+        version: link:../../packages/queue
+      bullmq:
+        specifier: 6.7.10
+        version: 6.7.10(ioredis@6.1.0)(pg@8.23.1)
+    devDependencies:
+      '@lomi/config':
+        specifier: workspace:*
+        version: link:../../packages/config
+      '@testcontainers/postgresql':
+        specifier: 12.2.2
+        version: 12.2.2(bare-buffer@3.7.3)
+      '@testcontainers/redis':
+        specifier: 12.2.2
+        version: 12.2.2(bare-buffer@3.7.3)
+      '@types/node':
+        specifier: ^24.0.0
+        version: 24.19.4
+      eslint:
+        specifier: 10.15.0
+        version: 10.15.0(jiti@2.7.0)
+      ioredis:
+        specifier: 6.1.0
+        version: 6.1.0
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+      vitest:
+        specifier: 5.1.2
+        version: 5.1.2(@opentelemetry/api@1.10.0)(@types/node@24.19.4)(vite@8.4.0(@types/node@24.19.4)(jiti@2.7.0)(yaml@2.9.1))
+
   packages/config:
     dependencies:
       '@eslint/js':
@@ -660,6 +703,9 @@ packages:
 
   '@testcontainers/postgresql@12.2.2':
     resolution: {integrity: sha512-ePhFeUswU6aHJ1HETznfnVKuR0KYtGkMfqE1DTltgSt21WokXFby/I+c7g/fPXSE9sfxfE+GtyoUeohejpVcSA==}
+
+  '@testcontainers/redis@12.2.2':
+    resolution: {integrity: sha512-Qf4l5sVKo7sxOBMfQYjLYMSIgsZU6Ia0jYsuH9jFoLJhJXInZoALjBjkCicFaHUvmqvm3RCdv0Cd9sntrAH14w==}
 
   '@turbo/darwin-64@2.11.13':
     resolution: {integrity: sha512-5IT29i4j55E5O66+la7L8Y46ut7dFaNZqrgUIYYNtcpMt9Ql7aYnSQb/6tZ+prE2AfX1RBCAtRJE41txS2rG3w==}
@@ -3019,6 +3065,15 @@ snapshots:
   '@standard-schema/spec@1.1.0': {}
 
   '@testcontainers/postgresql@12.2.2(bare-buffer@3.7.3)':
+    dependencies:
+      testcontainers: 12.2.2(bare-buffer@3.7.3)
+    transitivePeerDependencies:
+      - bare-abort-controller
+      - bare-buffer
+      - react-native-b4a
+      - supports-color
+
+  '@testcontainers/redis@12.2.2(bare-buffer@3.7.3)':
     dependencies:
       testcontainers: 12.2.2(bare-buffer@3.7.3)
     transitivePeerDependencies:
