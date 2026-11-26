@@ -1,0 +1,22 @@
+{
+  "name": "@lomi/queue",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The Redis side of extraction: queue name, job payload, deterministic job ids. Carries no state that must survive.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": { ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" } },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint ."
+  },
+  "dependencies": { "bullmq": "6.7.10", "ioredis": "6.1.0" },
+  "devDependencies": {
+    "@lomi/config": "workspace:*",
+    "@types/node": "^24.0.0",
+    "eslint": "10.15.0",
+    "typescript": "6.0.3"
+  }
+}

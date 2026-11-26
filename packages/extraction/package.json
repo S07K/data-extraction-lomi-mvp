@@ -1,0 +1,29 @@
+{
+  "name": "@lomi/extraction",
+  "version": "0.0.0",
+  "private": true,
+  "description": "IO adapters for extraction: PDF → text, and LLM providers (anthropic, claude-code, fake).",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": { ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" } },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "0.3.332",
+    "@anthropic-ai/sdk": "1.14.0",
+    "@lomi/core": "workspace:*",
+    "unpdf": "2.2.3"
+  },
+  "devDependencies": {
+    "@lomi/config": "workspace:*",
+    "@types/node": "^24.0.0",
+    "eslint": "10.15.0",
+    "typescript": "6.0.3",
+    "vitest": "5.1.2"
+  }
+}
