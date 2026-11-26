@@ -1,0 +1,36 @@
+{
+  "name": "@lomi/db",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Postgres system of record: Prisma schema, migrations, and every transactional data operation (upload, claim, commit, review).",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" }
+  },
+  "scripts": {
+    "db:generate": "prisma generate",
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint .",
+    "test:integration": "vitest run",
+    "migrate:deploy": "prisma migrate deploy",
+    "migrate:dev": "prisma migrate dev",
+    "seed": "node dist/seed-cli.js"
+  },
+  "dependencies": {
+    "@lomi/core": "workspace:*",
+    "@prisma/adapter-pg": "7.10.1",
+    "@prisma/client": "7.10.1",
+    "prisma": "7.10.1"
+  },
+  "devDependencies": {
+    "@lomi/config": "workspace:*",
+    "@testcontainers/postgresql": "12.2.2",
+    "@types/node": "^24.0.0",
+    "eslint": "10.15.0",
+    "typescript": "6.0.3",
+    "vitest": "5.1.2"
+  }
+}

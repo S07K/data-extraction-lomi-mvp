@@ -1,0 +1,192 @@
+// Postgres is the system of record. Redis (BullMQ) only carries "go look at version X" signals.
+// See docs/PLAN.md §4–§6 for the reasoning behind each table.
+
+generator client {
+  provider            = "prisma-client"
+  output              = "../src/generated/prisma"
+  moduleFormat        = "esm"
+  importFileExtension = "js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum DocumentType {
+  invoice
+  lease
+  market_report
+}
+
+enum VersionStatus {
+  queued
+  extracting
+  extracted
+  failed
+  superseded
+}
+
+enum RunOutcome {
+  running
+  succeeded
+  failed
+  discarded
+}
+
+enum CarryStatus {
+  new
+  unchanged
+  changed
+}
+
+enum ReviewAction {
+  approved
+  corrected
+}
+
+enum ReviewSource {
+  human
+  carried_over
+}
+
+enum CorrectionTag {
+  wrong_value
+  wrong_format
+  wrong_evidence
+  should_be_gap
+  missed_field
+  other
+}
+
+model Document {
+  id        String            @id @default(uuid())
+  type      DocumentType
+  title     String
+  createdAt DateTime          @default(now()) @map("created_at")
+  versions  DocumentVersion[]
+
+  @@map("documents")
+}
+
+/// One uploaded PDF. Status lives here (not in Redis) so it survives FLUSHALL.
+model DocumentVersion {
+  id             String        @id @default(uuid())
+  documentId     String        @map("document_id")
+  document       Document      @relation(fields: [documentId], references: [id])
+  versionNumber  Int           @map("version_number")
+  sha256         String
+  status         VersionStatus @default(queued)
+  failureReason  String?       @map("failure_reason")
+  /// Number of claims so far (incremented when a worker takes the lease).
+  attempts       Int           @default(0)
+  /// Claims allowed before parking as failed. A manual retry raises it (attempts + maxAttempts)
+  /// instead of resetting `attempts`, so run numbering stays unique and monotonic.
+  attemptLimit   Int           @default(3) @map("attempt_limit")
+  /// Lease: which worker holds the claim and until when. Expired lease ⇒ reconciler reclaims.
+  leaseOwner     String?       @map("lease_owner")
+  leaseExpiresAt DateTime?     @map("lease_expires_at")
+  /// Earliest time a queued version may be (re)enqueued — implements retry backoff durably.
+  nextAttemptAt  DateTime      @default(now()) @map("next_attempt_at")
+  /// Canonicalized parser output for THIS version. Evidence for this version is validated against it forever.
+  parsedText     String?       @map("parsed_text")
+  parserVersion  String?       @map("parser_version")
+  supersededById String?       @map("superseded_by_id")
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @default(now()) @updatedAt @map("updated_at")
+  extractedAt    DateTime?     @map("extracted_at")
+
+  file   VersionFile?
+  runs   ExtractionRun[]
+  values ExtractedValue[]
+
+  @@unique([documentId, versionNumber])
+  @@index([status, nextAttemptAt])
+  @@index([status, leaseExpiresAt])
+  @@map("document_versions")
+}
+
+/// Original PDF bytes, kept out of document_versions so they're never loaded by accident.
+model VersionFile {
+  versionId    String          @id @map("version_id")
+  version      DocumentVersion @relation(fields: [versionId], references: [id])
+  bytes        Bytes
+  mimeType     String          @map("mime_type")
+  sizeBytes    Int             @map("size_bytes")
+  originalName String?         @map("original_name")
+
+  @@map("version_files")
+}
+
+/// One row per extraction attempt: prompt + raw LLM response for debugging, even when discarded.
+model ExtractionRun {
+  id            String           @id @default(uuid())
+  versionId     String           @map("version_id")
+  version       DocumentVersion  @relation(fields: [versionId], references: [id])
+  attempt       Int
+  workerId      String           @map("worker_id")
+  provider      String
+  model         String?
+  promptVersion String?          @map("prompt_version")
+  prompt        Json?
+  rawResponse   Json?            @map("raw_response")
+  error         String?
+  inputTokens   Int?             @map("input_tokens")
+  outputTokens  Int?             @map("output_tokens")
+  latencyMs     Int?             @map("latency_ms")
+  outcome       RunOutcome       @default(running)
+  startedAt     DateTime         @default(now()) @map("started_at")
+  finishedAt    DateTime?        @map("finished_at")
+  values        ExtractedValue[]
+
+  @@unique([versionId, attempt])
+  @@map("extraction_runs")
+}
+
+/// Immutable model output (after evidence validation). A gap has value = null and a gap_reason.
+model ExtractedValue {
+  id              String           @id @default(uuid())
+  versionId       String           @map("version_id")
+  version         DocumentVersion  @relation(fields: [versionId], references: [id])
+  runId           String           @map("run_id")
+  run             ExtractionRun    @relation(fields: [runId], references: [id])
+  field           String
+  fieldType       String           @map("field_type")
+  value           String?
+  unit            String?
+  evidence        String?
+  evidenceStart   Int?             @map("evidence_start")
+  evidenceEnd     Int?             @map("evidence_end")
+  gapReason       String?          @map("gap_reason")
+  carryStatus     CarryStatus      @map("carry_status")
+  carryRule       String?          @map("carry_rule")
+  /// Same field in the base version this one was compared against.
+  previousValueId String?          @map("previous_value_id")
+  previousValue   ExtractedValue?  @relation("PreviousValue", fields: [previousValueId], references: [id])
+  nextValues      ExtractedValue[] @relation("PreviousValue")
+  createdAt       DateTime         @default(now()) @map("created_at")
+  reviews         Review[]
+
+  /// Idempotency: extracting the same version twice can never duplicate values.
+  @@unique([versionId, field])
+  @@map("extracted_values")
+}
+
+/// Append-only. The latest row per value is the effective review.
+model Review {
+  id                  String          @id @default(uuid())
+  valueId             String          @map("value_id")
+  value               ExtractedValue  @relation(fields: [valueId], references: [id])
+  action              ReviewAction
+  correctedValue      String?         @map("corrected_value")
+  note                String?
+  tags                CorrectionTag[]
+  source              ReviewSource    @default(human)
+  carriedFromReviewId String?         @map("carried_from_review_id")
+  carriedFrom         Review?         @relation("CarriedFrom", fields: [carriedFromReviewId], references: [id])
+  carriedTo           Review[]        @relation("CarriedFrom")
+  reviewer            String          @default("reviewer")
+  createdAt           DateTime        @default(now()) @map("created_at")
+
+  @@index([valueId, createdAt])
+  @@map("reviews")
+}

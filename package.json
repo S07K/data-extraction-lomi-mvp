@@ -1,0 +1,19 @@
+{
+  "name": "lomi-extraction",
+  "private": true,
+  "packageManager": "pnpm@10.17.1",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "test:integration": "turbo run test:integration",
+    "dev": "turbo run dev",
+    "db:generate": "turbo run db:generate"
+  },
+  "devDependencies": {
+    "turbo": "2.11.13",
+    "typescript": "6.0.3"
+  }
+}
