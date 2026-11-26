@@ -61,8 +61,20 @@ function DocumentView({
   const carried = done.filter((v) => v.reviewState === "carried_over").length;
   const readOnly = !shown.reviewable;
 
+  // The title + summary stay pinned; measure them so the sticky text panel sits just below.
+  const stickyRef = useRef<HTMLDivElement>(null);
+  const [headHeight, setHeadHeight] = useState(0);
+  useEffect(() => {
+    const el = stickyRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => setHeadHeight(el.offsetHeight));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   return (
-    <div className="content">
+    <div className="content" style={{ ["--doc-head-h" as string]: `${headHeight}px` }}>
+      <div className="doc-sticky" ref={stickyRef}>
       <header className="doc-head">
         <div className="doc-head-main">
           <h1>{d.title}</h1>
@@ -77,6 +89,7 @@ function DocumentView({
         <DocTools d={d} setVersion={setVersion} />
       </header>
       <Headline d={d} pending={pending.length} changed={changed} carried={carried} />
+      </div>
 
       <Banners d={d} onShowLatest={() => setVersion(undefined)} />
 
