@@ -14,7 +14,7 @@ docker compose up
 **What to click first**
 1. Open http://localhost:3000. All three documents should say they need review.
 2. Open the invoice. Approve a few values and correct one (pick a tag such as "Wrong value").
-3. Approve the rest, then use **Upload new version** with `fixtures/documents/invoice-001.v2.pdf`.
+3. Approve the rest, then click **Upload version 2** (top right) and drop in `fixtures/documents/invoice-001.v2.pdf`.
 4. When it finishes, the page says *"2 values need your review — 2 changed since the previous version; 3 kept their earlier review"*. Due date and total are shown in red with their v1 value and review. The other three show *Kept from v1*.
 5. Open the market report. *Median household income* is a **gap**: the document doesn't state it, and the reason is shown.
 
@@ -31,6 +31,50 @@ Without a credential, documents end up visibly **failed** with the reason (for e
 **Failure drills:** `./scripts/chaos.sh restart | flushall | supersede | all` runs the brief's scenarios against the running stack. With the fake provider, start the stack with `FAKE_LLM_DELAY_MS=15000`.
 
 **Tests:** `pnpm install && pnpm test` runs the unit tests (no Docker needed). `pnpm test:integration` runs the integration tests against real Postgres and Redis, which Testcontainers starts, so Docker must be running. CI runs both.
+
+### Set it up with a coding agent
+
+To have your coding agent (Claude Code, Cursor, Codex, …) do the setup and verification, paste this prompt into it:
+
+```text
+Set up and verify the "Extraction review" take-home from
+https://github.com/S07K/data-extraction-lomi-mvp on this machine. Work step by step and
+report what you did after each step. Do not modify any source code.
+
+Rules:
+- Never ask me to paste an API key or token into this chat, and never print the contents
+  of .env. If a key is needed, tell me to add it to .env myself and wait for me.
+- Never run `docker compose down -v`, delete Docker volumes, or kill processes you didn't
+  start without asking me first.
+
+1. Clone the repo (skip if the current directory already is it) and read README.md.
+2. Check prerequisites: Docker is running and `docker compose version` is v2. Check that
+   ports 3000, 4000, 55432 and 56379 are free. If one is taken, tell me what holds it and stop.
+3. If .env doesn't exist, copy .env.example to .env. Ask me which LLM to use:
+   (a) Anthropic API: I will set ANTHROPIC_API_KEY in .env myself; or
+   (b) no LLM: set LLM_PROVIDER=fake in .env (deterministic stand-in extractor).
+4. Run `docker compose up -d --build`. Wait until `curl -sf localhost:4000/health`
+   succeeds and the `migrate` service exited with code 0 (`docker compose ps -a`).
+5. Verify the seeded data: `curl -s localhost:4000/documents` must list 3 documents.
+   Poll every few seconds (up to 3 minutes) until none is `queued` or `extracting`.
+   Report each document's status and progress. If any is `failed`, show its
+   `failureReason`. If it's a missing or invalid key, tell me, wait for me to fix .env,
+   then run `docker compose up -d worker` and `curl -X POST localhost:4000/documents/<id>/retry`.
+6. Verify re-extraction without touching the seeded documents:
+   - upload fixtures/documents/invoice-001.pdf as a new document
+     (`curl -F type=invoice -F title="Agent check" -F file=@fixtures/documents/invoice-001.pdf localhost:4000/documents`)
+     and wait for it to be extracted;
+   - approve all its values (`POST /values/<id>/review` with `{"action":"approve"}`);
+   - upload fixtures/documents/invoice-001.v2.pdf as its next version
+     (`POST /documents/<id>/versions`) and wait for it to be extracted;
+   - confirm exactly `due_date` and `total_amount` are pending and the other three are
+     `carried_over` (`GET /documents/<id>`).
+7. Ask me before running these optional checks:
+   - tests: `pnpm install && pnpm test && pnpm test:integration` (Node 22+, pnpm 10, Docker);
+   - failure drills: `./scripts/chaos.sh all` (restarts containers and FLUSHALLs Redis).
+8. Finish with a short summary: what passed, anything that failed, and what to open first:
+   http://localhost:3000 (see "What to click first" in README.md).
+```
 
 ## Layout
 
